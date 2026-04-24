@@ -1,10 +1,23 @@
 import Head from 'next/head';
 import { useBrandTheme } from '@/hooks/useBrandTheme';
 import { Users, Receipt, TrendingUp, Calendar } from 'lucide-react';
+import useSWR from 'swr';
+import { Inquiry, Invoice } from '@/types';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Dashboard() {
   const { brand } = useBrandTheme();
   const brandName = brand === 'escot' ? 'エスコット' : 'かきつばた';
+
+  const { data: leads } = useSWR<Inquiry[]>('/api/leads', fetcher);
+  const { data: invoices } = useSWR<Invoice[]>('/api/invoices', fetcher);
+
+  const brandLeads = leads?.filter(l => l.brand === brand) || [];
+  const brandInvoices = invoices?.filter(i => i.brand === brand) || [];
+  
+  const newLeadsCount = brandLeads.filter(l => l.status === '新規問い合わせ').length;
+  const unmailedInvoicesCount = brandInvoices.filter(i => i.status !== '発送済み').length;
 
   return (
     <>
@@ -30,8 +43,8 @@ export default function Dashboard() {
             <div>
               <p className="text-sm font-semibold text-slate-500 mb-1">新規問い合わせ</p>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold text-slate-900">12</h3>
-                <span className="text-xs font-semibold text-emerald-500 px-1.5 py-0.5 bg-emerald-50 rounded-full">+2 今回</span>
+                <h3 className="text-3xl font-bold text-slate-900">{newLeadsCount}</h3>
+                <span className="text-xs font-semibold text-emerald-500 px-1.5 py-0.5 bg-emerald-50 rounded-full">件</span>
               </div>
             </div>
           </div>
@@ -46,9 +59,9 @@ export default function Dashboard() {
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-500 mb-1">今月の未発送請求書</p>
+              <p className="text-sm font-semibold text-slate-500 mb-1">未発送請求書</p>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold text-slate-900">3</h3>
+                <h3 className="text-3xl font-bold text-slate-900">{unmailedInvoicesCount}</h3>
                 <span className="text-sm font-medium text-slate-400">件</span>
               </div>
             </div>

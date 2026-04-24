@@ -1,9 +1,14 @@
 import Head from 'next/head';
 import LeadTable from '@/components/leads/LeadTable';
-import { mockInquiries } from '@/data/mock';
 import { Users } from 'lucide-react';
+import useSWR from 'swr';
+import { Inquiry } from '@/types';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function LeadsPage() {
+  const { data, error, mutate } = useSWR<Inquiry[]>('/api/leads', fetcher);
+
   return (
     <>
       <Head>
@@ -25,7 +30,9 @@ export default function LeadsPage() {
           </button>
         </div>
         
-        <LeadTable initialData={mockInquiries} />
+        {error ? <div className="text-rose-500 bg-rose-50 p-4 rounded-xl">読み込みエラーが発生しました。</div> : !data ? <div className="text-slate-500 p-4 flex justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div> : (
+          <LeadTable data={data} onUpdate={() => mutate()} />
+        )}
       </div>
     </>
   );

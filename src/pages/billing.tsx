@@ -1,9 +1,14 @@
 import Head from 'next/head';
 import InvoiceTable from '@/components/billing/InvoiceTable';
-import { mockInvoices } from '@/data/mock';
 import { Receipt } from 'lucide-react';
+import useSWR from 'swr';
+import { Invoice } from '@/types';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function BillingPage() {
+  const { data, error, mutate } = useSWR<Invoice[]>('/api/invoices', fetcher);
+
   return (
     <>
       <Head>
@@ -25,7 +30,9 @@ export default function BillingPage() {
           </button>
         </div>
         
-        <InvoiceTable initialData={mockInvoices} />
+        {error ? <div className="text-rose-500 bg-rose-50 p-4 rounded-xl">読み込みエラーが発生しました。</div> : !data ? <div className="text-slate-500 p-4 flex justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div> : (
+          <InvoiceTable data={data} onUpdate={() => mutate()} />
+        )}
       </div>
     </>
   );

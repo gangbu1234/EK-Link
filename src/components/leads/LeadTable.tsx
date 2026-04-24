@@ -12,29 +12,39 @@ const STATUS_OPTIONS: LeadStatus[] = [
 ];
 
 interface Props {
-  initialData: Inquiry[];
+  data: Inquiry[];
+  onUpdate: () => void;
 }
 
-export default function LeadTable({ initialData }: Props) {
-  const [data, setData] = useState<Inquiry[]>(initialData);
+export default function LeadTable({ data, onUpdate }: Props) {
   const { brand: activeBrand } = useBrandTheme();
+  const [updating, setUpdating] = useState<string | null>(null);
 
-  const handleStatusChange = (id: string, newStatus: LeadStatus) => {
-    setData(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, status: newStatus, updatedAt: new Date() };
-      }
-      return item;
-    }));
+  const handleStatusChange = async (id: string, newStatus: LeadStatus) => {
+    setUpdating(id);
+    try {
+      await fetch(`/api/leads/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      onUpdate();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUpdating(null);
+    }
   };
 
-  const isAlert = (date: Date) => {
+  const isAlert = (dateStr: Date | string) => {
+    const date = new Date(dateStr);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     return diff > 72 * 60 * 60 * 1000; // 3 days
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateStr: Date | string) => {
+    const date = new Date(dateStr);
     return new Intl.DateTimeFormat('ja-JP', {
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     }).format(date);
@@ -59,10 +69,11 @@ export default function LeadTable({ initialData }: Props) {
           <tbody className="divide-y divide-slate-100">
             {filteredData.map((item) => {
               const alert = isAlert(item.updatedAt);
+              const isUpdating = updating === item.id;
               return (
                 <tr 
                   key={item.id} 
-                  className={`transition-colors hover:bg-slate-50/50 ${alert ? 'bg-rose-50/80' : ''}`}
+                  className={`transition-colors hover:bg-slate-50/50 ${alert ? 'bg-rose-50/80' : ''} ${isUpdating ? 'opacity-50' : ''}`}
                 >
                   <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
                     <div className="flex items-center gap-2">
@@ -87,6 +98,7 @@ export default function LeadTable({ initialData }: Props) {
                   <td className="px-4 py-3">
                     <select
                       value={item.status}
+                      disabled={isUpdating}
                       onChange={(e) => handleStatusChange(item.id, e.target.value as LeadStatus)}
                       className={`text-sm rounded-md border py-1.5 pl-2 pr-8 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
                         item.status === '入塾決定' 
