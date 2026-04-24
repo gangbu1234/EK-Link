@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-dark: var(--color-primary-dark);
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  /* Escot (Navy) #1A2F4B */
+  --brand-escot: #1A2F4B;
+  --brand-escot-light: #2c4465;
+  --brand-escot-dark: #0f1c2d;
+  
+  /* Kakitsubata (Purple) #5D3176 */
+  --brand-kakitsubata: #5D3176;
+  --brand-kakitsubata-light: #7b459a;
+  --brand-kakitsubata-dark: #3f2151;
+}
+
+:root[data-brand="escot"] {
+  --color-primary: var(--brand-escot);
+  --color-primary-light: var(--brand-escot-light);
+  --color-primary-dark: var(--brand-escot-dark);
+}
+
+:root[data-brand="kakitsubata"] {
+  --color-primary: var(--brand-kakitsubata);
+  --color-primary-light: var(--brand-kakitsubata-light);
+  --color-primary-dark: var(--brand-kakitsubata-dark);
+}
+
+/* Default fallback */
+:root:not([data-brand]) {
+  --color-primary: var(--brand-escot);
+  --color-primary-light: var(--brand-escot-light);
+  --color-primary-dark: var(--brand-escot-dark);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
