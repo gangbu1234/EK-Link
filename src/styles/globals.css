@@ -43,4 +43,31 @@
 body {
   color: var(--foreground);
   background: var(--background);
+  /* iOS Safariでタップした時のハイライトを透明にする */
+  -webkit-tap-highlight-color: transparent;
+  /* 慣性スクロールを有効化 */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safariで入力時にズームされるのを防ぐ（16px未満だとズームされる） */
+input, select, textarea {
+  font-size: 16px !important;
+  /* デフォルトの丸みを消す */
+  -webkit-appearance: none;
+  border-radius: 8px;
+}
+
+/* モバイルデバイスでのボタンの見た目リセット */
+button {
+  -webkit-appearance: none;
+  border-radius: 8px;
+}
+
+/* 安全領域（Safe Area）の対応 */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top);
 }

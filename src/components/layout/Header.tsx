@@ -5,18 +5,18 @@ import { Invoice } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-export default function Header() {
-  const { brand } = useBrandTheme();
+export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
+  const { brandFilter } = useBrandTheme();
   const { data: invoices } = useSWR<Invoice[]>('/api/invoices', fetcher);
   
-  const unmailedInvoicesCount = invoices 
-    ? invoices.filter(i => i.brand === brand && i.status !== '発送済み').length 
+  const unmailedInvoicesCount = Array.isArray(invoices) 
+    ? invoices.filter(i => (brandFilter === 'all' || i.brand === brandFilter) && i.status !== '発送確認済').length 
     : 0;
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
       <div className="flex items-center md:hidden">
-        <button className="p-2 -ml-2 text-slate-500 hover:text-slate-700">
+        <button onClick={onMenuClick} className="p-2 -ml-2 text-slate-500 hover:text-slate-700">
           <Menu className="w-6 h-6" />
         </button>
       </div>
