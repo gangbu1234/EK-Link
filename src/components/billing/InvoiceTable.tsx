@@ -165,12 +165,12 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
               <tr>
-                <th className={thCls} onClick={() => handleSort('studentId')}><div className="flex items-center">塾生番号<SortIcon col="studentId" /></div></th>
                 <th className={thCls} onClick={() => handleSort('studentName')}><div className="flex items-center">生徒名<SortIcon col="studentName" /></div></th>
                 <th className={thCls} onClick={() => handleSort('assignee')}><div className="flex items-center">担当者<SortIcon col="assignee" /></div></th>
-                <th className="px-4 py-3 whitespace-nowrap">アクション</th>
                 <th className={thCls} onClick={() => handleSort('status')}><div className="flex items-center">ステータス<SortIcon col="status" /></div></th>
+                <th className="px-4 py-3 whitespace-nowrap">アクション</th>
                 {brandFilter === 'all' && <th className={thCls} onClick={() => handleSort('brand')}><div className="flex items-center">ブランド<SortIcon col="brand" /></div></th>}
+                <th className={thCls} onClick={() => handleSort('studentId')}><div className="flex items-center">塾生番号<SortIcon col="studentId" /></div></th>
                 <th className={thCls} onClick={() => handleSort('sentDate')}><div className="flex items-center">最終発送日<SortIcon col="sentDate" /></div></th>
                 <th className="px-4 py-3 w-10"></th>
               </tr>
@@ -186,9 +186,14 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
                     onClick={() => setEditTarget(item)}
                     className={`cursor-pointer transition-colors hover:bg-slate-50/80 ${isUpdating ? 'opacity-30' : ''}`}
                   >
-                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{item.studentId || <span className="text-slate-300">—</span>}</td>
                     <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{item.studentName}</td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{item.assignee}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {icon}
+                        <span className={`font-medium ${text}`}>{item.status}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       {s === '日程決め' && (
                         <button disabled={isUpdating} onClick={() => toggleStatus(item.id, item.status)}
@@ -227,17 +232,12 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
                         </button>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {icon}
-                        <span className={`font-medium ${text}`}>{item.status}</span>
-                      </div>
-                    </td>
                     {brandFilter === 'all' && (
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${BRAND_LABEL[item.brand]?.className}`}>{BRAND_LABEL[item.brand]?.label}</span>
                       </td>
                     )}
+                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{item.studentId || <span className="text-slate-300">—</span>}</td>
                     <td className="px-4 py-3 text-slate-500 text-sm">{formatDate(item.sentDate)}</td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <button disabled={isUpdating} onClick={() => setDeleteTarget(item)}
