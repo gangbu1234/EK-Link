@@ -96,14 +96,17 @@ export default function Sidebar({ isOpen, onClose }: Props) {
           })}
         </nav>
         
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100 flex items-center justify-between">
           <button 
             onClick={() => { setShowSettings(true); onClose(); }}
-            className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-3 px-3 py-2 flex-1 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
           >
             <Settings className="w-5 h-5 text-slate-400" />
             設定
           </button>
+          <div className="text-[10px] text-slate-300 font-mono" title="現在のシステムバージョン">
+            v.{process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA.substring(0, 7) : 'local'}
+          </div>
         </div>
       </div>
 
