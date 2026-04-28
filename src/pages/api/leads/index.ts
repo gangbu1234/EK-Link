@@ -37,6 +37,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
   }
+  if (req.method === 'PATCH') {
+    if (req.body.action === 'reset_all') {
+      try {
+        await prisma.inquiry.updateMany({
+          data: { status: '新規問い合わせ' }
+        });
+        return res.status(200).json({ message: 'All statuses reset' });
+      } catch (error: any) {
+        console.error('[API/Leads] Reset error:', error);
+        return res.status(500).json({ message: 'Reset failed' });
+      }
+    }
+  }
   
   return res.status(405).json({ message: 'Method not allowed' });
 }
