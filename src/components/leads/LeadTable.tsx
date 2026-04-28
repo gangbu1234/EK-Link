@@ -21,12 +21,25 @@ export default function LeadTable({ data, onUpdate }: Props) {
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Inquiry | null>(null);
   const [editTarget, setEditTarget] = useState<Inquiry | null>(null);
-  const [sortCol, setSortCol] = useState<SortCol>('updatedAt');
-  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
+  type SortRule = { col: SortCol; dir: 'asc' | 'desc' };
+  const [sortRules, setSortRules] = useState<SortRule[]>([{ col: 'updatedAt', dir: 'desc' }]);
 
   const handleSort = (col: SortCol) => {
-    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortCol(col); setSortDir('asc'); }
+    setSortRules(currentRules => {
+      const existingIdx = currentRules.findIndex(r => r.col === col);
+      const newRules = [...currentRules];
+      
+      if (existingIdx >= 0) {
+        if (newRules[existingIdx].dir === 'asc') {
+          newRules[existingIdx].dir = 'desc';
+        } else {
+          newRules.splice(existingIdx, 1);
+        }
+      } else {
+        newRules.push({ col, dir: 'asc' });
+      }
+      return newRules;
+    });
   };
 
   const toggleStatus = async (id: string, currentStatus: LeadStatus) => {
@@ -69,28 +82,42 @@ export default function LeadTable({ data, onUpdate }: Props) {
   const unwanted = filtered.filter(i => i.status === '追わない');
   const finished = filtered.filter(i => i.status === '入塾決定');
 
-  const sortedRegular = [...regular].sort((a, b) => {
-    let va: string | number = '', vb: string | number = '';
-    if (sortCol === 'name') { va = a.name; vb = b.name; }
-    else if (sortCol === 'status') { va = a.status; vb = b.status; }
-    else if (sortCol === 'updatedAt') { va = new Date(a.updatedAt).getTime(); vb = new Date(b.updatedAt).getTime(); }
-    else if (sortCol === 'assignee') { va = a.assignee; vb = b.assignee; }
-    else if (sortCol === 'subject') { va = a.subject; vb = b.subject; }
-    else if (sortCol === 'brand') { va = a.brand; vb = b.brand; }
-    if (va < vb) return sortDir === 'asc' ? -1 : 1;
-    if (va > vb) return sortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  const sortData = (dataArray: Inquiry[]) => {
+    return [...dataArray].sort((a, b) => {
+      for (const rule of sortRules) {
+        let va: string | number = '', vb: string | number = '';
+        if (rule.col === 'name') { va = a.name; vb = b.name; }
+        else if (rule.col === 'status') { va = a.status; vb = b.status; }
+        else if (rule.col === 'updatedAt') { va = new Date(a.updatedAt).getTime(); vb = new Date(b.updatedAt).getTime(); }
+        else if (rule.col === 'assignee') { va = a.assignee || ''; vb = b.assignee || ''; }
+        else if (rule.col === 'subject') { va = a.subject || ''; vb = b.subject || ''; }
+        else if (rule.col === 'brand') { va = a.brand; vb = b.brand; }
+        
+        if (va < vb) return rule.dir === 'asc' ? -1 : 1;
+        if (va > vb) return rule.dir === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
 
-  const sortedUnwanted = [...unwanted].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  const sortedFinished = [...finished].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const sortedRegular = sortData(regular);
+  const sortedUnwanted = sortData(unwanted);
+  const sortedFinished = sortData(finished);
   
   // 指定の順序で結合: 進行中 -> 追わない -> 入塾済み
   const displayData = [...sortedRegular, ...sortedUnwanted, ...sortedFinished];
 
   const SortIcon = ({ col }: { col: SortCol }) => {
-    if (sortCol !== col) return <ChevronsUpDown className="w-3 h-3 ml-1 text-slate-300" />;
-    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 ml-1 text-primary" /> : <ChevronDown className="w-3 h-3 ml-1 text-primary" />;
+    const ruleIndex = sortRules.findIndex(r => r.col === col);
+    if (ruleIndex === -1) return <ChevronsUpDown className="w-3 h-3 ml-1 text-slate-300" />;
+    
+    const rule = sortRules[ruleIndex];
+    return (
+      <div className="flex items-center">
+        {rule.dir === 'asc' ? <ChevronUp className="w-3 h-3 ml-1 text-primary" /> : <ChevronDown className="w-3 h-3 ml-1 text-primary" />}
+        {sortRules.length > 1 && <span className="text-[10px] ml-0.5 text-primary font-bold">{ruleIndex + 1}</span>}
+      </div>
+    );
   };
 
   const thCls = 'px-4 py-3 whitespace-nowrap cursor-pointer select-none hover:text-slate-700';
@@ -99,18 +126,28 @@ export default function LeadTable({ data, onUpdate }: Props) {
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {!(sortRules.length === 1 && sortRules[0].col === 'updatedAt' && sortRules[0].dir === 'desc') && (
+          <div className="flex justify-end px-4 py-2 border-b border-slate-200 bg-slate-50/50">
+            <button 
+              onClick={() => setSortRules([{ col: 'updatedAt', dir: 'desc' }])}
+              className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> ソートリセット
+            </button>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
               <tr>
                 {(['name', 'status', 'updatedAt', 'assignee', 'subject'] as SortCol[]).map((col, i) => (
-                  <th key={col} className={thCls} onClick={() => handleSort(col)}>
+                  <th key={col} className={thCls} onClick={() => handleSort(col)} title="クリックでソート条件を追加/変更">
                     <div className="flex items-center">{['氏名', 'ステータス', '最終更新日', '担当予定者', '希望科目'][i]}<SortIcon col={col} /></div>
                   </th>
                 ))}
                 <th className="px-4 py-3 whitespace-nowrap">アクション</th>
                 {brandFilter === 'all' && (
-                  <th className={thCls} onClick={() => handleSort('brand')}>
+                  <th className={thCls} onClick={() => handleSort('brand')} title="クリックでソート条件を追加/変更">
                     <div className="flex items-center">ブランド<SortIcon col="brand" /></div>
                   </th>
                 )}
