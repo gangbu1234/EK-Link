@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Invoice, InvoiceStatus } from '@/types';
-import { Check, Calendar, FileText, Send, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, CheckCircle2, Clock, FileDown, Eye, Package } from 'lucide-react';
+import { Check, Calendar, FileText, Send, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, CheckCircle2, Clock, FileDown, Eye, Package, RotateCcw } from 'lucide-react';
 import { useBrandTheme } from '@/hooks/useBrandTheme';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import EditInvoiceModal from '@/components/billing/EditInvoiceModal';
@@ -19,12 +19,27 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
   const [editTarget, setEditTarget] = useState<Invoice | null>(null);
-  const [sortCol, setSortCol] = useState<SortCol>('studentName');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  type SortRule = { col: SortCol; dir: 'asc' | 'desc' };
+  const [sortRules, setSortRules] = useState<SortRule[]>([{ col: 'studentName', dir: 'asc' }]);
 
   const handleSort = (col: SortCol) => {
-    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortCol(col); setSortDir('asc'); }
+    setSortRules(currentRules => {
+      const existingIdx = currentRules.findIndex(r => r.col === col);
+      let newRules = [...currentRules];
+      
+      if (existingIdx >= 0) {
+        const item = newRules[existingIdx];
+        newRules.splice(existingIdx, 1);
+        
+        if (item.dir === 'asc') {
+          newRules.unshift({ col, dir: 'desc' });
+        }
+      } else {
+        newRules.unshift({ col, dir: 'asc' });
+      }
+      
+      return newRules;
+    });
   };
 
   const toggleStatus = async (id: string, currentStatus: InvoiceStatus) => {
@@ -70,36 +85,38 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
     : [];
 
   const displayData = [...filtered].sort((a, b) => {
-    let va: string | number = '', vb: string | number = '';
-    
-    if (sortCol === 'status') {
-      const getStatusWeight = (s: string) => {
-        switch (s) {
-          case '日程決め': return 0;
-          case '日程回答待ち': return 1;
-          case '請求書出力待ち': return 2;
-          case '請求書確認待ち': return 3;
-          case '請求書発送待ち': return 4;
-          case '発送確認済': return 5;
-          default: return 9;
-        }
-      };
-      va = getStatusWeight(a.status);
-      vb = getStatusWeight(b.status);
-    } else if (sortCol === 'studentId') { 
-      va = a.studentId || ''; vb = b.studentId || ''; 
-    } else if (sortCol === 'studentName') { 
-      va = a.studentName; vb = b.studentName; 
-    } else if (sortCol === 'assignee') {
-      va = a.assignee || ''; vb = b.assignee || '';
-    } else if (sortCol === 'brand') { 
-      va = a.brand; vb = b.brand; 
-    } else if (sortCol === 'sentDate') { 
-      va = a.sentDate ? new Date(a.sentDate).getTime() : 0; vb = b.sentDate ? new Date(b.sentDate).getTime() : 0; 
-    }
+    for (const rule of sortRules) {
+      let va: string | number = '', vb: string | number = '';
+      
+      if (rule.col === 'status') {
+        const getStatusWeight = (s: string) => {
+          switch (s) {
+            case '日程決め': return 0;
+            case '日程回答待ち': return 1;
+            case '請求書出力待ち': return 2;
+            case '請求書確認待ち': return 3;
+            case '請求書発送待ち': return 4;
+            case '発送確認済': return 5;
+            default: return 9;
+          }
+        };
+        va = getStatusWeight(a.status);
+        vb = getStatusWeight(b.status);
+      } else if (rule.col === 'studentId') { 
+        va = a.studentId || ''; vb = b.studentId || ''; 
+      } else if (rule.col === 'studentName') { 
+        va = a.studentName; vb = b.studentName; 
+      } else if (rule.col === 'assignee') {
+        va = a.assignee || ''; vb = b.assignee || '';
+      } else if (rule.col === 'brand') { 
+        va = a.brand; vb = b.brand; 
+      } else if (rule.col === 'sentDate') { 
+        va = a.sentDate ? new Date(a.sentDate).getTime() : 0; vb = b.sentDate ? new Date(b.sentDate).getTime() : 0; 
+      }
 
-    if (va < vb) return sortDir === 'asc' ? -1 : 1;
-    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      if (va < vb) return rule.dir === 'asc' ? -1 : 1;
+      if (va > vb) return rule.dir === 'asc' ? 1 : -1;
+    }
     return 0;
   });
 
@@ -116,8 +133,16 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
   };
 
   const SortIcon = ({ col }: { col: SortCol }) => {
-    if (sortCol !== col) return <ChevronsUpDown className="w-3 h-3 ml-1 text-slate-300" />;
-    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 ml-1 text-primary" /> : <ChevronDown className="w-3 h-3 ml-1 text-primary" />;
+    const ruleIndex = sortRules.findIndex(r => r.col === col);
+    if (ruleIndex === -1) return <ChevronsUpDown className="w-3 h-3 ml-1 text-slate-300" />;
+    
+    const rule = sortRules[ruleIndex];
+    return (
+      <div className="flex items-center">
+        {rule.dir === 'asc' ? <ChevronUp className="w-3 h-3 ml-1 text-primary" /> : <ChevronDown className="w-3 h-3 ml-1 text-primary" />}
+        {sortRules.length > 1 && <span className="text-[10px] ml-0.5 text-primary font-bold">{ruleIndex + 1}</span>}
+      </div>
+    );
   };
 
   const thCls = 'px-4 py-3 whitespace-nowrap cursor-pointer select-none hover:text-slate-700';
@@ -126,6 +151,16 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {!(sortRules.length === 1 && sortRules[0].col === 'studentName' && sortRules[0].dir === 'asc') && (
+          <div className="flex justify-end px-4 py-2 border-b border-slate-200 bg-slate-50/50">
+            <button 
+              onClick={() => setSortRules([{ col: 'studentName', dir: 'asc' }])}
+              className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> ソート条件リセット
+            </button>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
