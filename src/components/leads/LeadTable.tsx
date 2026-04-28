@@ -12,7 +12,7 @@ const BRAND_LABEL: Record<string, { label: string; className: string }> = {
 
 const STATUS_ORDER: LeadStatus[] = ['新規問い合わせ', '初メール送付済', '面談・体験授業待ち', '体験後メール送付済', '入塾決定', '追わない'];
 
-type SortCol = 'name' | 'status' | 'updatedAt' | 'assignee' | 'subject' | 'brand';
+type SortCol = 'name' | 'status' | 'updatedAt' | 'assignee' | 'subject' | 'brand' | 'createdAt';
 
 interface Props { data: Inquiry[]; onUpdate: () => void; }
 
@@ -27,17 +27,19 @@ export default function LeadTable({ data, onUpdate }: Props) {
   const handleSort = (col: SortCol) => {
     setSortRules(currentRules => {
       const existingIdx = currentRules.findIndex(r => r.col === col);
-      const newRules = [...currentRules];
+      let newRules = [...currentRules];
       
       if (existingIdx >= 0) {
-        if (newRules[existingIdx].dir === 'asc') {
-          newRules[existingIdx].dir = 'desc';
-        } else {
-          newRules.splice(existingIdx, 1);
+        const item = newRules[existingIdx];
+        newRules.splice(existingIdx, 1);
+        
+        if (item.dir === 'asc') {
+          newRules.unshift({ col, dir: 'desc' });
         }
       } else {
-        newRules.push({ col, dir: 'asc' });
+        newRules.unshift({ col, dir: 'asc' });
       }
+      
       return newRules;
     });
   };
@@ -92,6 +94,7 @@ export default function LeadTable({ data, onUpdate }: Props) {
         else if (rule.col === 'assignee') { va = a.assignee || ''; vb = b.assignee || ''; }
         else if (rule.col === 'subject') { va = a.subject || ''; vb = b.subject || ''; }
         else if (rule.col === 'brand') { va = a.brand; vb = b.brand; }
+        else if (rule.col === 'createdAt') { va = new Date(a.createdAt).getTime(); vb = new Date(b.createdAt).getTime(); }
         
         if (va < vb) return rule.dir === 'asc' ? -1 : 1;
         if (va > vb) return rule.dir === 'asc' ? 1 : -1;
@@ -140,12 +143,25 @@ export default function LeadTable({ data, onUpdate }: Props) {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
               <tr>
-                {(['name', 'status', 'updatedAt', 'assignee', 'subject'] as SortCol[]).map((col, i) => (
-                  <th key={col} className={thCls} onClick={() => handleSort(col)} title="クリックでソート条件を追加/変更">
-                    <div className="flex items-center">{['氏名', 'ステータス', '最終更新日', '担当予定者', '希望科目'][i]}<SortIcon col={col} /></div>
-                  </th>
-                ))}
+                <th className={thCls} onClick={() => handleSort('name')} title="クリックでソート条件を追加/変更">
+                  <div className="flex items-center">氏名<SortIcon col="name" /></div>
+                </th>
+                <th className={thCls} onClick={() => handleSort('status')} title="クリックでソート条件を追加/変更">
+                  <div className="flex items-center">ステータス<SortIcon col="status" /></div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap">アクション</th>
+                <th className={thCls} onClick={() => handleSort('updatedAt')} title="クリックでソート条件を追加/変更">
+                  <div className="flex items-center">最終更新日<SortIcon col="updatedAt" /></div>
+                </th>
+                <th className={thCls} onClick={() => handleSort('assignee')} title="クリックでソート条件を追加/変更">
+                  <div className="flex items-center">担当予定者<SortIcon col="assignee" /></div>
+                </th>
+                <th className={thCls} onClick={() => handleSort('createdAt')} title="クリックでソート条件を追加/変更">
+                  <div className="flex items-center">初回問合せ日<SortIcon col="createdAt" /></div>
+                </th>
+                <th className={thCls} onClick={() => handleSort('subject')} title="クリックでソート条件を追加/変更">
+                  <div className="flex items-center">希望科目<SortIcon col="subject" /></div>
+                </th>
                 {brandFilter === 'all' && (
                   <th className={thCls} onClick={() => handleSort('brand')} title="クリックでソート条件を追加/変更">
                     <div className="flex items-center">ブランド<SortIcon col="brand" /></div>
@@ -190,13 +206,6 @@ export default function LeadTable({ data, onUpdate }: Props) {
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className={`flex items-center gap-1.5 ${!isFinal && alert ? 'text-rose-600 font-medium' : 'text-slate-500'}`}>
-                        <Clock className="w-3.5 h-3.5" />{formatDate(item.updatedAt)}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{item.assignee}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.subject}</td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       {!isFinal ? (
                         <button
@@ -216,6 +225,14 @@ export default function LeadTable({ data, onUpdate }: Props) {
                         </button>
                       )}
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className={`flex items-center gap-1.5 ${!isFinal && alert ? 'text-rose-600 font-medium' : 'text-slate-500'}`}>
+                        <Clock className="w-3.5 h-3.5" />{formatDate(item.updatedAt)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{item.assignee}</td>
+                    <td className="px-4 py-3 text-slate-500 text-sm">{item.createdAt ? formatDate(item.createdAt) : '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">{item.subject}</td>
                     {brandFilter === 'all' && (
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${BRAND_LABEL[item.brand]?.className}`}>{BRAND_LABEL[item.brand]?.label}</span>

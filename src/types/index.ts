@@ -16,6 +16,7 @@ export interface Inquiry {
   subject: string;
   assignee: string;
   updatedAt: Date;
+  createdAt: Date;
   status: LeadStatus;
 }
 

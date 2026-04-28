@@ -14,6 +14,7 @@ model Inquiry {
   subject   String
   assignee  String
   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
   status    String
 }
 
