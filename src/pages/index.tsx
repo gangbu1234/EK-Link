@@ -36,27 +36,20 @@ export default function Dashboard() {
       </div>
 
       {/* 概要カード */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatCard 
           title="新規問い合わせ" 
           value={newLeadsCount} 
           icon={<Users className="w-6 h-6" />} 
           color="bg-primary"
-          trend="+2% 先週比"
+          trend="リード対応待ち"
         />
         <StatCard 
           title="未発送の請求書" 
           value={unmailedInvoicesCount} 
           icon={<ReceiptText className="w-6 h-6" />} 
           color="bg-[#1A2F4B]"
-          trend="-5% 先週比"
-        />
-        <StatCard 
-          title="本日の対応予定" 
-          value="12" 
-          icon={<TrendingUp className="w-6 h-6" />} 
-          color="bg-emerald-500"
-          trend="+3件 本日"
+          trend="発送フロー進行中"
         />
       </div>
 
@@ -82,20 +75,45 @@ export default function Dashboard() {
       </div>
 
       {/* 下段アラートなど */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-rose-500" />
-            未対応アラート
+            重要アラート
           </h2>
           <div className="space-y-3">
-            <div className="p-3 bg-rose-50 rounded-lg flex items-center justify-between">
-              <div className="text-sm font-medium text-rose-800">回答待ち (3日以上経過)</div>
-              <div className="text-sm font-bold text-rose-600">4名</div>
-            </div>
-            <div className="p-3 bg-amber-50 rounded-lg flex items-center justify-between">
-              <div className="text-sm font-medium text-amber-800">発送待ち</div>
-              <div className="text-sm font-bold text-amber-600">{getStatusCount('請求書発送待ち')}名</div>
+            {/* 毎月20日を過ぎた場合のみ「日程決め」ステータスの人数を表示 */}
+            {new Date().getDate() > 20 ? (
+              getStatusCount('日程決め') > 0 ? (
+                <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-rose-600" />
+                    <div>
+                      <div className="text-sm font-bold text-rose-800">【至急】日程決め 未着手</div>
+                      <div className="text-xs text-rose-600">20日を過ぎています。速やかに日程回答の入力を進めてください。</div>
+                    </div>
+                  </div>
+                  <div className="text-xl font-black text-rose-600">{getStatusCount('日程決め')}<span className="text-xs ml-1 font-bold">名</span></div>
+                </div>
+              ) : (
+                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3 text-emerald-700">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <div className="text-sm font-bold">今月の日程決めはすべて完了しています。</div>
+                </div>
+              )
+            ) : (
+              <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3 text-slate-500">
+                <Clock className="w-5 h-5" />
+                <div className="text-sm">20日まではアラートは表示されません。</div>
+              </div>
+            )}
+            
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-3 text-amber-800">
+                <Package className="w-5 h-5" />
+                <div className="text-sm font-bold text-amber-900">発送待ち（最終確認をお願いします）</div>
+              </div>
+              <div className="text-lg font-bold text-amber-700">{getStatusCount('請求書発送待ち')}名</div>
             </div>
           </div>
         </div>
