@@ -10,9 +10,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await prisma.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`);
     
-    // Inquiryテーブルに createdAt カラムを追加（カラム名の大文字小文字に注意）
-    console.log('Attempting to update Inquiry table...');
-    await prisma.$executeRawUnsafe(`ALTER TABLE "Inquiry" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`);
+    // Inquiryテーブルに createdAt カラムを追加
+    // PostgreSQLの大文字小文字の挙動に合わせて複数のパターンを試行
+    console.log('Attempting to update Inquiry table with multiple patterns...');
+    
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Inquiry" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`);
+      console.log('Success with "Inquiry"');
+    } catch (e) {
+      console.log('Failed with "Inquiry", trying "inquiry"');
+      await prisma.$executeRawUnsafe(`ALTER TABLE inquiry ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`);
+    }
 
     return res.status(200).json({
       status: 'success',
