@@ -15,17 +15,32 @@ export default function Dashboard() {
   const brandInvoices = Array.isArray(invoices) ? (brandFilter === 'all' ? invoices : invoices.filter(i => i.brand === brandFilter)) : [];
   
   const activeLeadsCount = brandLeads.filter(l => l.status !== '入塾決定' && l.status !== '追わない').length;
-  const unmailedInvoicesCount = brandInvoices.filter(i => i.status !== '発送確認済').length;
+  const getUniqueCount = (items: Invoice[]) => {
+    const uniqueIds = new Set(items.map(i => i.studentId?.split('-')[0] || i.id));
+    return uniqueIds.size;
+  };
 
-  const getStatusCount = (status: InvoiceStatus) => brandInvoices.filter(i => i.status === status).length;
+  const getStatusCounts = (status: InvoiceStatus) => {
+    const items = brandInvoices.filter(i => i.status === status);
+    return {
+      unique: getUniqueCount(items),
+      total: items.length
+    };
+  };
+
+  const unmailedInvoices = brandInvoices.filter(i => i.status !== '発送確認済');
+  const unmailedStats = {
+    unique: getUniqueCount(unmailedInvoices),
+    total: unmailedInvoices.length
+  };
 
   const invoiceStats = [
-    { label: '日程決め', count: getStatusCount('日程決め'), icon: <Calendar className="w-4 h-4" />, color: 'bg-slate-100 text-slate-600' },
-    { label: '回答待ち', count: getStatusCount('日程回答待ち'), icon: <Clock className="w-4 h-4" />, color: 'bg-amber-100 text-amber-600' },
-    { label: '出力待ち', count: getStatusCount('請求書出力待ち'), icon: <FileDown className="w-4 h-4" />, color: 'bg-blue-100 text-blue-600' },
-    { label: '確認待ち', count: getStatusCount('請求書確認待ち'), icon: <Eye className="w-4 h-4" />, color: 'bg-indigo-100 text-indigo-600' },
-    { label: '発送待ち', count: getStatusCount('請求書発送待ち'), icon: <Package className="w-4 h-4" />, color: 'bg-purple-100 text-purple-600' },
-    { label: '発送済', count: getStatusCount('発送確認済'), icon: <CheckCircle2 className="w-4 h-4" />, color: 'bg-emerald-100 text-emerald-600' },
+    { label: '日程決め', stats: getStatusCounts('日程決め'), icon: <Calendar className="w-4 h-4" />, color: 'bg-slate-100 text-slate-600' },
+    { label: '回答待ち', stats: getStatusCounts('日程回答待ち'), icon: <Clock className="w-4 h-4" />, color: 'bg-amber-100 text-amber-600' },
+    { label: '出力待ち', stats: getStatusCounts('請求書出力待ち'), icon: <FileDown className="w-4 h-4" />, color: 'bg-blue-100 text-blue-600' },
+    { label: '確認待ち', stats: getStatusCounts('請求書確認待ち'), icon: <Eye className="w-4 h-4" />, color: 'bg-indigo-100 text-indigo-600' },
+    { label: '発送待ち', stats: getStatusCounts('請求書発送待ち'), icon: <Package className="w-4 h-4" />, color: 'bg-purple-100 text-purple-600' },
+    { label: '発送済', stats: getStatusCounts('発送確認済'), icon: <CheckCircle2 className="w-4 h-4" />, color: 'bg-emerald-100 text-emerald-600' },
   ];
 
   return (
@@ -46,7 +61,8 @@ export default function Dashboard() {
         />
         <StatCard 
           title="未発送の請求書" 
-          value={unmailedInvoicesCount} 
+          value={`${unmailedStats.unique}名`}
+          subValue={`(のべ${unmailedStats.total}件)`}
           icon={<ReceiptText className="w-6 h-6" />} 
           color="bg-[#1A2F4B]"
           trend="発送フロー進行中"
@@ -68,7 +84,8 @@ export default function Dashboard() {
                 {stat.icon}
               </div>
               <div className="text-xs font-medium text-slate-500 mb-1">{stat.label}</div>
-              <div className="text-xl font-bold text-slate-900">{stat.count}<span className="text-xs ml-0.5">名</span></div>
+              <div className="text-lg font-bold text-slate-900">{stat.stats.unique}<span className="text-xs ml-0.5">名</span></div>
+              <div className="text-[10px] text-slate-400 font-medium">(のべ{stat.stats.total}件)</div>
             </div>
           ))}
         </div>
@@ -84,7 +101,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {/* 毎月20日を過ぎた場合のみ「日程決め」ステータスの人数を表示 */}
             {new Date().getDate() > 20 ? (
-              getStatusCount('日程決め') > 0 ? (
+              getStatusCounts('日程決め').total > 0 ? (
                 <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-5 h-5 text-rose-600" />
@@ -93,7 +110,10 @@ export default function Dashboard() {
                       <div className="text-xs text-rose-600">20日を過ぎています。速やかに日程回答の入力を進めてください。</div>
                     </div>
                   </div>
-                  <div className="text-xl font-black text-rose-600">{getStatusCount('日程決め')}<span className="text-xs ml-1 font-bold">名</span></div>
+                  <div className="text-right">
+                    <div className="text-xl font-black text-rose-600">{getStatusCounts('日程決め').unique}<span className="text-xs ml-1 font-bold">名</span></div>
+                    <div className="text-[10px] text-rose-500 font-bold">(のべ{getStatusCounts('日程決め').total}件)</div>
+                  </div>
                 </div>
               ) : (
                 <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3 text-emerald-700">
@@ -113,7 +133,10 @@ export default function Dashboard() {
                 <Package className="w-5 h-5" />
                 <div className="text-sm font-bold text-amber-900">発送待ち（最終確認をお願いします）</div>
               </div>
-              <div className="text-lg font-bold text-amber-700">{getStatusCount('請求書発送待ち')}名</div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-amber-700">{getStatusCounts('請求書発送待ち').unique}名</div>
+                <div className="text-[10px] text-amber-600 font-bold">(のべ{getStatusCounts('請求書発送待ち').total}件)</div>
+              </div>
             </div>
           </div>
         </div>
@@ -122,7 +145,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon, color, trend }: any) {
+function StatCard({ title, value, subValue, icon, color, trend }: any) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
       <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg shadow-slate-200`}>
@@ -130,10 +153,11 @@ function StatCard({ title, value, icon, color, trend }: any) {
       </div>
       <div>
         <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-        <div className="flex items-end gap-2">
+        <div className="flex items-baseline gap-2">
           <h3 className="text-3xl font-bold text-slate-900 leading-none">{value}</h3>
-          <span className="text-xs font-semibold text-emerald-500 pb-1">{trend}</span>
+          {subValue && <span className="text-xs font-bold text-slate-400">{subValue}</span>}
         </div>
+        <div className="mt-1 text-xs font-semibold text-emerald-500">{trend}</div>
       </div>
     </div>
   );
