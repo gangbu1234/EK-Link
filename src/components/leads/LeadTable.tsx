@@ -94,7 +94,7 @@ export default function LeadTable({ data, onUpdate }: Props) {
         else if (rule.col === 'assignee') { va = a.assignee || ''; vb = b.assignee || ''; }
         else if (rule.col === 'subject') { va = a.subject || ''; vb = b.subject || ''; }
         else if (rule.col === 'brand') { va = a.brand; vb = b.brand; }
-        else if (rule.col === 'createdAt') { va = new Date(a.createdAt).getTime(); vb = new Date(b.createdAt).getTime(); }
+        else if (rule.col === 'createdAt') { va = a.createdAt ? new Date(a.createdAt).getTime() : 0; vb = b.createdAt ? new Date(b.createdAt).getTime() : 0; }
         
         if (va < vb) return rule.dir === 'asc' ? -1 : 1;
         if (va > vb) return rule.dir === 'asc' ? 1 : -1;
