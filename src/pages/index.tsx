@@ -34,6 +34,11 @@ export default function Dashboard() {
     total: unmailedInvoices.length
   };
 
+  const allStats = {
+    unique: getUniqueCount(brandInvoices),
+    total: brandInvoices.length
+  };
+
   const invoiceStats = [
     { label: '日程決め', stats: getStatusCounts('日程決め'), icon: <Calendar className="w-4 h-4" />, color: 'bg-slate-100 text-slate-600' },
     { label: '回答待ち', stats: getStatusCounts('日程回答待ち'), icon: <Clock className="w-4 h-4" />, color: 'bg-amber-100 text-amber-600' },
@@ -61,8 +66,12 @@ export default function Dashboard() {
         />
         <StatCard 
           title="未発送の請求書" 
-          value={`${unmailedStats.unique}名`}
-          subValue={`(のべ${unmailedStats.total}件)`}
+          value={unmailedStats.unique}
+          totalValue={allStats.unique}
+          subValue={unmailedStats.total}
+          subTotalValue={allStats.total}
+          unit="名"
+          subUnit="件"
           icon={<ReceiptText className="w-6 h-6" />} 
           color="bg-[#1A2F4B]"
           trend="発送フロー進行中"
@@ -84,8 +93,14 @@ export default function Dashboard() {
                 {stat.icon}
               </div>
               <div className="text-xs font-medium text-slate-500 mb-1">{stat.label}</div>
-              <div className="text-lg font-bold text-slate-900">{stat.stats.unique}<span className="text-xs ml-0.5">名</span></div>
-              <div className="text-[10px] text-slate-400 font-medium">(のべ{stat.stats.total}件)</div>
+              <div className="flex items-baseline text-slate-900">
+                <span className="text-lg font-bold">{stat.stats.unique}</span>
+                <span className="text-[10px] text-slate-400 font-bold ml-0.5">/{allStats.unique}名</span>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium flex items-center">
+                <span>(のべ{stat.stats.total}</span>
+                <span className="text-[8px] opacity-70">/{allStats.total}件)</span>
+              </div>
             </div>
           ))}
         </div>
@@ -134,8 +149,14 @@ export default function Dashboard() {
                 <div className="text-sm font-bold text-amber-900">発送待ち（最終確認をお願いします）</div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-amber-700">{getStatusCounts('請求書発送待ち').unique}名</div>
-                <div className="text-[10px] text-amber-600 font-bold">(のべ{getStatusCounts('請求書発送待ち').total}件)</div>
+                <div className="flex items-baseline justify-end text-amber-700">
+                  <span className="text-lg font-bold">{getStatusCounts('請求書発送待ち').unique}</span>
+                  <span className="text-[10px] font-bold ml-0.5">/{allStats.unique}名</span>
+                </div>
+                <div className="text-[10px] text-amber-600 font-bold flex items-center justify-end">
+                  <span>(のべ{getStatusCounts('請求書発送待ち').total}</span>
+                  <span className="text-[8px] opacity-70">/{allStats.total}件)</span>
+                </div>
               </div>
             </div>
           </div>
@@ -145,7 +166,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, subValue, icon, color, trend }: any) {
+function StatCard({ title, value, totalValue, subValue, subTotalValue, unit, subUnit, icon, color, trend }: any) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
       <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg shadow-slate-200`}>
@@ -153,11 +174,21 @@ function StatCard({ title, value, subValue, icon, color, trend }: any) {
       </div>
       <div>
         <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-3xl font-bold text-slate-900 leading-none">{value}</h3>
-          {subValue && <span className="text-xs font-bold text-slate-400">{subValue}</span>}
+        <div className="flex flex-col">
+          <div className="flex items-baseline gap-1">
+            <h3 className="text-3xl font-bold text-slate-900 leading-none">{value}</h3>
+            {totalValue !== undefined && (
+              <span className="text-xs font-bold text-slate-400">/{totalValue}{unit}</span>
+            )}
+          </div>
+          {subValue !== undefined && (
+            <div className="flex items-center mt-1 text-slate-400 font-bold">
+              <span className="text-[10px]">(のべ{subValue}</span>
+              <span className="text-[8px] opacity-70">/{subTotalValue}{subUnit})</span>
+            </div>
+          )}
         </div>
-        <div className="mt-1 text-xs font-semibold text-emerald-500">{trend}</div>
+        <div className="mt-1.5 text-xs font-semibold text-emerald-500">{trend}</div>
       </div>
     </div>
   );
