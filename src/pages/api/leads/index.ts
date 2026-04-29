@@ -24,8 +24,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       console.log('[API/Leads] Creating with data:', req.body);
-      const data = req.body;
-      const lead = await prisma.inquiry.create({ data });
+      const { brand, name, subject, assignee, status } = req.body;
+      const lead = await prisma.inquiry.create({
+        data: {
+          brand,
+          name,
+          subject,
+          assignee,
+          status,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      });
       console.log('[API/Leads] Created successfully:', lead.id);
       return res.status(201).json(lead);
     } catch (error: any) {
