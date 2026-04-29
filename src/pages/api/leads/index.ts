@@ -17,7 +17,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(leads);
     } catch (error: any) {
       console.error('[API/Leads] Fetch error:', error);
-      return res.status(500).json({ message: 'Fetch failed', error: error.message });
+      return res.status(500).json({ 
+        message: 'Fetch failed', 
+        error: error.message,
+        stack: error.stack,
+        code: error.code
+      });
     }
   }
   
