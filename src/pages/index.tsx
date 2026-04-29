@@ -14,7 +14,7 @@ export default function Dashboard() {
   const brandLeads = Array.isArray(leads) ? (brandFilter === 'all' ? leads : leads.filter(l => l.brand === brandFilter)) : [];
   const brandInvoices = Array.isArray(invoices) ? (brandFilter === 'all' ? invoices : invoices.filter(i => i.brand === brandFilter)) : [];
   
-  const newLeadsCount = brandLeads.filter(l => l.status === '新規問い合わせ').length;
+  const activeLeadsCount = brandLeads.filter(l => l.status !== '入塾決定' && l.status !== '追わない').length;
   const unmailedInvoicesCount = brandInvoices.filter(i => i.status !== '発送確認済').length;
 
   const getStatusCount = (status: InvoiceStatus) => brandInvoices.filter(i => i.status === status).length;
@@ -38,11 +38,11 @@ export default function Dashboard() {
       {/* 概要カード */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatCard 
-          title="新規問い合わせ" 
-          value={newLeadsCount} 
+          title="問い合わせ対応中" 
+          value={activeLeadsCount} 
           icon={<Users className="w-6 h-6" />} 
           color="bg-primary"
-          trend="リード対応待ち"
+          trend="全ブランド合計"
         />
         <StatCard 
           title="未発送の請求書" 
