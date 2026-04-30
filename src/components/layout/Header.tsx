@@ -6,6 +6,7 @@ import { Invoice, Inquiry } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
+export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { brandFilter } = useBrandTheme();
   const { data: invoices } = useSWR<Invoice[]>('/api/invoices', fetcher);
   const { data: leads } = useSWR<Inquiry[]>('/api/leads', fetcher);
