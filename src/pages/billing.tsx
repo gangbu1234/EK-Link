@@ -18,11 +18,28 @@ export default function BillingPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const filteredData = Array.isArray(data) ? data.filter(i => {
-    const matchesSearch = i.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         (i.studentId?.toLowerCase().includes(searchTerm.toLowerCase()));
+    // スペース（全角・半角）で分割してAND検索
+    const searchWords = searchTerm.trim().split(/[\s　]+/).filter(w => w !== '');
+    
+    const matchesSearch = searchWords.every(word => {
+      const w = word.toLowerCase();
+      return (
+        i.studentName.toLowerCase().includes(w) || 
+        i.studentId?.toLowerCase().includes(w) ||
+        i.assignee.toLowerCase().includes(w) ||
+        i.status.toLowerCase().includes(w) ||
+        (i.brand === 'escot' ? 'エスコット' : 'かきつばた').includes(w)
+      );
+    });
+
     const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) : [];
+
+  const handleQuickFilter = (word: string) => {
+    setSearchTerm(word);
+    setStatusFilter('all'); // クイックフィルタ時はステータスフィルタをリセット
+  };
 
   const handleExportCSV = () => {
     if (filteredData.length === 0) return;
@@ -165,7 +182,11 @@ export default function BillingPage() {
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <InvoiceTable data={filteredData} onUpdate={() => mutate()} />
+          <InvoiceTable 
+            data={filteredData} 
+            onUpdate={() => mutate()} 
+            onQuickFilter={handleQuickFilter}
+          />
         )}
       </div>
 

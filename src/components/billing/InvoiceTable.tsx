@@ -12,9 +12,13 @@ const BRAND_LABEL: Record<string, { label: string; className: string }> = {
 
 type SortCol = 'studentId' | 'studentName' | 'assignee' | 'status' | 'brand' | 'sentDate';
 
-interface Props { data: Invoice[]; onUpdate: () => void; }
+interface Props { 
+  data: Invoice[]; 
+  onUpdate: () => void; 
+  onQuickFilter?: (word: string) => void;
+}
 
-export default function InvoiceTable({ data, onUpdate }: Props) {
+export default function InvoiceTable({ data, onUpdate, onQuickFilter }: Props) {
   const { brandFilter } = useBrandTheme();
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
@@ -187,11 +191,21 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
                     className={`cursor-pointer transition-colors hover:bg-slate-50/80 ${isUpdating ? 'opacity-30' : ''}`}
                   >
                     <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{item.studentName}</td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{item.assignee}</td>
+                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                      <span 
+                        onClick={(e) => { e.stopPropagation(); onQuickFilter?.(item.assignee); }}
+                        className="hover:text-primary hover:underline underline-offset-4 decoration-primary/30"
+                      >
+                        {item.assignee}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div 
+                        className="flex items-center gap-2 group/status cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); onQuickFilter?.(item.status); }}
+                      >
                         {icon}
-                        <span className={`font-medium ${text}`}>{item.status}</span>
+                        <span className={`font-medium ${text} group-hover/status:underline underline-offset-4 decoration-current/30`}>{item.status}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
@@ -234,7 +248,12 @@ export default function InvoiceTable({ data, onUpdate }: Props) {
                     </td>
                     {brandFilter === 'all' && (
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${BRAND_LABEL[item.brand]?.className}`}>{BRAND_LABEL[item.brand]?.label}</span>
+                        <span 
+                          onClick={(e) => { e.stopPropagation(); onQuickFilter?.(BRAND_LABEL[item.brand]?.label); }}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold cursor-pointer transition-transform hover:scale-105 ${BRAND_LABEL[item.brand]?.className}`}
+                        >
+                          {BRAND_LABEL[item.brand]?.label}
+                        </span>
                       </td>
                     )}
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{item.studentId || <span className="text-slate-300">—</span>}</td>
