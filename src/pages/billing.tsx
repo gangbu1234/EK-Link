@@ -16,6 +16,11 @@ export default function BillingPage() {
   // フィルタ状態
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [billingBrandFilter, setBillingBrandFilter] = useState('all');
+
+  // 担当者一覧を動的に生成
+  const assignees = Array.isArray(data) ? Array.from(new Set(data.map(i => i.assignee))).filter(Boolean).sort() : [];
 
   const filteredData = Array.isArray(data) ? data.filter(i => {
     // スペース（全角・半角）で分割してAND検索
@@ -33,12 +38,17 @@ export default function BillingPage() {
     });
 
     const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesAssignee = assigneeFilter === 'all' || i.assignee === assigneeFilter;
+    const matchesBrand = billingBrandFilter === 'all' || i.brand === billingBrandFilter;
+    
+    return matchesSearch && matchesStatus && matchesAssignee && matchesBrand;
   }) : [];
 
   const handleQuickFilter = (word: string) => {
     setSearchTerm(word);
-    setStatusFilter('all'); // クイックフィルタ時はステータスフィルタをリセット
+    setStatusFilter('all');
+    setAssigneeFilter('all');
+    setBillingBrandFilter('all');
   };
 
   const handleExportCSV = () => {
@@ -127,25 +137,47 @@ export default function BillingPage() {
         </div>
 
         {/* ツールバー */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-4">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="生徒名・塾生番号で検索..."
+              placeholder="検索..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+          
+          <div className="flex flex-wrap items-center gap-2">
+            {/* ブランドフィルタ */}
+            <select
+              value={billingBrandFilter}
+              onChange={e => setBillingBrandFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none min-w-[120px]"
+            >
+              <option value="all">全ブランド</option>
+              <option value="escot">エスコット</option>
+              <option value="kakitsubata">かきつばた</option>
+            </select>
+
+            {/* 担当者フィルタ */}
+            <select
+              value={assigneeFilter}
+              onChange={e => setAssigneeFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none min-w-[120px]"
+            >
+              <option value="all">全担当者</option>
+              {assignees.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+
+            {/* ステータスフィルタ */}
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none"
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none min-w-[140px]"
             >
-              <option value="all">すべてのステータス</option>
+              <option value="all">全ステータス</option>
               <option value="日程決め">日程決め</option>
               <option value="日程回答待ち">日程回答待ち</option>
               <option value="請求書出力待ち">請求書出力待ち</option>
@@ -154,23 +186,23 @@ export default function BillingPage() {
               <option value="発送確認済">発送確認済</option>
             </select>
           </div>
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={handleCopyText}
-              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-sm transition-colors border border-transparent hover:border-slate-200"
-              title="テキストをコピー"
+              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-sm transition-colors"
+              title="一覧をコピー"
             >
               <Copy className="w-4 h-4" />
-              <span>コピー</span>
+              <span className="hidden sm:inline">コピー</span>
             </button>
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-sm transition-colors border border-transparent hover:border-slate-200"
-              title="CSVダウンロード"
+              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-sm transition-colors"
+              title="CSV出力"
             >
               <Download className="w-4 h-4" />
-              <span>CSV出力</span>
+              <span className="hidden sm:inline">CSV</span>
             </button>
           </div>
         </div>
