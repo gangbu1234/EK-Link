@@ -2,7 +2,7 @@ import { Bell, Search, Menu, X, Users, Receipt, Calendar, AlertTriangle } from '
 import { useState } from 'react';
 import { useBrandTheme } from '@/hooks/useBrandTheme';
 import useSWR from 'swr';
-import { Invoice } from '@/types';
+import { Invoice, Inquiry } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
