@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import InvoiceTable from '@/components/billing/InvoiceTable';
 import AddInvoiceModal from '@/components/billing/AddInvoiceModal';
-import { Receipt, Plus, RefreshCcw } from 'lucide-react';
+import { Receipt, Plus, RefreshCcw, Search, Filter, FileText, Download, Copy } from 'lucide-react';
 import useSWR from 'swr';
 import { Invoice } from '@/types';
 
@@ -12,6 +12,45 @@ export default function BillingPage() {
   const { data, error, mutate } = useSWR<Invoice[]>('/api/invoices', fetcher);
   const [showModal, setShowModal] = useState(false);
   const [resetting, setResetting] = useState(false);
+  
+  // フィルタ状態
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filteredData = Array.isArray(data) ? data.filter(i => {
+    const matchesSearch = i.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (i.studentId?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  }) : [];
+
+  const handleExportCSV = () => {
+    if (filteredData.length === 0) return;
+    const headers = ['塾生番号', '生徒名', '担当者', 'ステータス', 'ブランド', '最終発送日'];
+    const rows = filteredData.map(i => [
+      i.studentId || '',
+      i.studentName,
+      i.assignee,
+      i.status,
+      i.brand === 'escot' ? 'エスコット' : 'かきつばた',
+      i.sentDate ? new Date(i.sentDate).toLocaleDateString('ja-JP') : ''
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `請求書管理_${new Date().toLocaleDateString('ja-JP')}.csv`;
+    link.click();
+  };
+
+  const handleCopyText = () => {
+    if (filteredData.length === 0) return;
+    const text = filteredData.map(i => 
+      `${i.studentId || ''}\t${i.studentName}\t${i.status}\t${i.assignee}`
+    ).join('\n');
+    navigator.clipboard.writeText(text);
+    alert('一覧をコピーしました。');
+  };
 
   const handleAllReset = async () => {
     if (!confirm('すべての請求書のステータスを「日程決め」にリセットしますか？')) return;
@@ -69,6 +108,55 @@ export default function BillingPage() {
             </button>
           </div>
         </div>
+
+        {/* ツールバー */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="生徒名・塾生番号で検索..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none"
+            >
+              <option value="all">すべてのステータス</option>
+              <option value="日程決め">日程決め</option>
+              <option value="日程回答待ち">日程回答待ち</option>
+              <option value="請求書出力待ち">請求書出力待ち</option>
+              <option value="請求書確認待ち">請求書確認待ち</option>
+              <option value="請求書発送待ち">請求書発送待ち</option>
+              <option value="発送確認済">発送確認済</option>
+            </select>
+          </div>
+          <div className="flex-1" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyText}
+              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-sm transition-colors border border-transparent hover:border-slate-200"
+              title="テキストをコピー"
+            >
+              <Copy className="w-4 h-4" />
+              <span>コピー</span>
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-sm transition-colors border border-transparent hover:border-slate-200"
+              title="CSVダウンロード"
+            >
+              <Download className="w-4 h-4" />
+              <span>CSV出力</span>
+            </button>
+          </div>
+        </div>
         
         {error ? (
           <div className="text-rose-500 bg-rose-50 p-4 rounded-xl">読み込みエラーが発生しました。</div>
@@ -77,7 +165,7 @@ export default function BillingPage() {
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <InvoiceTable data={data} onUpdate={() => mutate()} />
+          <InvoiceTable data={filteredData} onUpdate={() => mutate()} />
         )}
       </div>
 
