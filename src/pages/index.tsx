@@ -1,4 +1,5 @@
 // Force rebuild - 2026-04-26
+import Link from 'next/link';
 import { useBrandTheme } from '@/hooks/useBrandTheme';
 import { Users, ReceiptText, TrendingUp, AlertCircle, Clock, FileDown, Eye, Package, CheckCircle2, Calendar } from 'lucide-react';
 import useSWR from 'swr';
@@ -63,6 +64,7 @@ export default function Dashboard() {
           icon={<Users className="w-6 h-6" />} 
           color="bg-primary"
           trend="全ブランド合計"
+          href="/leads"
         />
         <StatCard 
           title="未発送の請求書" 
@@ -75,6 +77,7 @@ export default function Dashboard() {
           icon={<ReceiptText className="w-6 h-6" />} 
           color="bg-[#1A2F4B]"
           trend="発送フロー進行中"
+          href="/billing"
         />
       </div>
 
@@ -166,30 +169,32 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, totalValue, subValue, subTotalValue, unit, subUnit, icon, color, trend }: any) {
+function StatCard({ title, value, totalValue, subValue, subTotalValue, unit, subUnit, icon, color, trend, href }: any) {
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
-      <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg shadow-slate-200`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-1">
-            <h3 className="text-3xl font-bold text-slate-900 leading-none">{value}</h3>
-            {totalValue !== undefined && (
-              <span className="text-xs font-bold text-slate-400">/{totalValue}{unit}</span>
+    <Link href={href || '#'} className="block">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-lg hover:border-primary/20 transition-all group">
+        <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform`}>
+          {icon}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
+          <div className="flex flex-col">
+            <div className="flex items-baseline gap-1">
+              <h3 className="text-3xl font-bold text-slate-900 leading-none">{value}</h3>
+              {totalValue !== undefined && (
+                <span className="text-xs font-bold text-slate-400">/{totalValue}{unit}</span>
+              )}
+            </div>
+            {subValue !== undefined && (
+              <div className="flex items-center mt-1 text-slate-400 font-bold">
+                <span className="text-[10px]">(のべ{subValue}</span>
+                <span className="text-[8px] opacity-70">/{subTotalValue}{subUnit})</span>
+              </div>
             )}
           </div>
-          {subValue !== undefined && (
-            <div className="flex items-center mt-1 text-slate-400 font-bold">
-              <span className="text-[10px]">(のべ{subValue}</span>
-              <span className="text-[8px] opacity-70">/{subTotalValue}{subUnit})</span>
-            </div>
-          )}
+          <div className="mt-1.5 text-xs font-semibold text-emerald-500">{trend}</div>
         </div>
-        <div className="mt-1.5 text-xs font-semibold text-emerald-500">{trend}</div>
       </div>
-    </div>
+    </Link>
   );
 }
